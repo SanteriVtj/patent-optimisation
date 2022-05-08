@@ -26,7 +26,7 @@ function simulate_svdata(par::params, data::Data)
     σ = par.σ
     γ = par.γ
 
-    fee = data.fee
+    r̄ = data.fee
     sample = data.sample
     T = data.T
     P = data.P
@@ -41,12 +41,12 @@ function simulate_svdata(par::params, data::Data)
 
     r = zeros(size(N))
     r[:,1] = N[:,1]
-    r̄ = zeros(size(N))
-    r̄[:,1] = Int.(N[:,1] .> fee[1])
+    r_dum = zeros(size(N))
+    r_dum[:,1] = Int.(N[:,1] .> r̄[1])
 
     for i in 2:T
         r[:,i] = maximum(hcat(r[:,i-1], δ*N[:,i]))
-        r̄[:,i] = Int.(r[:,i] .> fee[i])
+        r_dum [:,i] = Int.(r[:,i] .> r̄[i])
     end
 
     survive = sum(r̄, dims=1)
