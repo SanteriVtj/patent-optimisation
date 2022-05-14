@@ -1,7 +1,7 @@
 module PatentModel
 
 import Base.@kwdef
-export Data, params, simulate_data, smm, hello
+export Data, patentparams, simulate_data, smm, hello
 
 @kwdef struct Data
     y::Array{Float64}
@@ -9,9 +9,11 @@ export Data, params, simulate_data, smm, hello
     sample::Array{Float64}
     T::Int
     P::Int
+    ν::Float64
+    s::Array{Float64}
 end
 
-@kwdef mutable struct params
+@kwdef mutable struct patentparams
     δ::Float64
     θ::Float64
     ϕ::Float64
@@ -19,8 +21,9 @@ end
     γ::Float64
 end
 
-function simulate_svdata(par::params, data::Data)
+function simulate_svdata(par::patentparams, data::Data)
     δ = par.δ
+    logδ = log(δ)
     θ = par.θ
     ϕ = par.ϕ
     σ = par.σ
@@ -39,22 +42,26 @@ function simulate_svdata(par::params, data::Data)
 
     N = sample*σ²'.+μ'
 
+    s = s .≤ θ
+
     r = zeros(size(N))
     r[:,1] = N[:,1]
     r_dum = zeros(size(N))
     r_dum[:,1] = Int.(N[:,1] .> r̄[1])
 
     for i in 2:T
-        r[:,i] = maximum(hcat(r[:,i-1], δ*N[:,i]))
-        r_dum [:,i] = Int.(r[:,i] .> r̄[i])
+        r[:,i] = s.*maximum(hcat(r[:,i-1], logδ+N[:,i]))
+        r_dum[:,i] = Int.(r[:,i] .> r̄[i])
     end
+
+    ll = cumsum(-log1p.((r.-log.(c))./ν))
 
     survive = sum(r̄, dims=1)
     lapse = P .- survive
     lapse_cumulative = 
 end
 
-function smm(par::params, data::Data)
+function smm(par::patentparams, data::Data)
     println("hello")
 end
 
